@@ -4,6 +4,14 @@ import doctest
 # You are welcome to modify the classes below, as well as to implement new
 # classes and helper functions as necessary.
 
+op_order = {
+    ' ** ': 3,
+    ' * ': 2,
+    ' / ': 2,
+    ' + ': 1,
+    ' - ': 1,
+    None: 5
+}
 
 class Symbol:
     """
@@ -138,15 +146,20 @@ class BinOp(Symbol):
         l_str = ['', self.left.__str__(), '']
         r_str = ['', self.right.__str__(), '']
 
-        # PARENTHESIZATION; based on PEMDAS
-        # if binary operation is multiplication or division...
-        if self.op == ' * ' or self.op == ' / ':
-            # if either part of the operation is of lower precedence
-            # add parentheses
-            if self.left.op == ' + ' or self.left.op == ' - ':
-                l_str[0], l_str[2] = '(', ')'
-            if self.right.op == ' + ' or self.right.op == ' - ':
-                r_str[0], r_str[2] = '(', ')'
+        # # PARENTHESIZATION; based on PEMDAS
+        # # if binary operation is multiplication or division...
+        # if self.op == ' * ' or self.op == ' / ':
+        #     # if either part of the operation is of lower precedence
+        #     # add parentheses
+        #     if self.left.op == ' + ' or self.left.op == ' - ':
+        #         l_str[0], l_str[2] = '(', ')'
+        #     if self.right.op == ' + ' or self.right.op == ' - ':
+        #         r_str[0], r_str[2] = '(', ')'
+
+        if op_order[ self.op ] > op_order[ self.left.op ]:
+            l_str[0], l_str[2] = '(', ')'
+        if op_order[ self.op ] > op_order[ self.right.op ]:
+            r_str[0], r_str[2] = '(', ')'
         # SPECIAL CASES
         # if binary operation is division and the right operation has an equal precedence
         # add parentheses
@@ -356,11 +369,14 @@ class Pow(BinOp):
         elif isinstance(self.left, Num) and self.left.n == 0:
             if isinstance(self.right, Num) and self.right.n > 0:
                 return Num(0)
-            elif isinstance(self.right, BinOp):
+            elif isinstance(self.right, (BinOp, Symbol)):
                 return Num(0)
+        
+        return self.left ** self.right
+            
     
     def eval(self, mapping):
-        return self.left.eval(mapping) ** self.right
+        return self.left.eval(mapping) ** self.right.eval(mapping)
 
 def expression(string):
     # return parsed expression
